@@ -16,6 +16,8 @@ namespace Nhom2_pro
         public QLSV()
         {
             InitializeComponent();
+            this.dataGridView1.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
+
         }
 
         private void textBox6_TextChanged(object sender, EventArgs e)
@@ -26,17 +28,24 @@ namespace Nhom2_pro
         private void QLSV_Load(object sender, EventArgs e)
         {
             LoadData();
+            LoadNganhHoc(); // Tải dữ liệu ngành học vào comboBoxmanganh
         }
         private void LoadData()
         {
-            string connectionString = "Data Source=HOANG-QUOC-DUY;Initial Catalog=QuanLySinhVien;Integrated Security=True;"; // Chuỗi kết nối đến SQL Server
+            string connectionString = "Data Source=HOANG-QUOC-DUY;Initial Catalog=QuanLySinhVien;Integrated Security=True;";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT * FROM SinhVien WHERE DaXoa = 0", conn);
+                    // Truy vấn kết hợp giữa SinhVien và NganhHoc để lấy TenNganh
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT sv.MaSV, sv.Ho, sv.Ten, sv.Email, sv.SoDienThoai, sv.MaNganh, nh.TenNganh, sv.NgaySinh, sv.DiaChi, sv.SoCMND, sv.KhoaHoc, sv.GhiChu, sv.GioiTinh " +
+                        "FROM SinhVien sv " +
+                        "JOIN NganhHoc nh ON sv.MaNganh = nh.MaNganh " +
+                        "WHERE sv.DaXoa = 0", conn);
+
                     SqlDataAdapter adapter = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     adapter.Fill(dt);
@@ -47,49 +56,26 @@ namespace Nhom2_pro
                     MessageBox.Show("Lỗi: " + ex.Message);
                 }
             }
-
         }
+
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            // Kiểm tra xem người dùng đã nhấn vào hàng hợp lệ hay không
             if (e.RowIndex >= 0)
             {
-                // Lấy thông tin hàng đã chọn
                 DataGridViewRow selectedRow = dataGridView1.Rows[e.RowIndex];
 
-                // Lấy thông tin sinh viên từ hàng đã chọn
-                string maSV = selectedRow.Cells["MaSV"].Value.ToString();
-                string ho = selectedRow.Cells["Ho"].Value.ToString();
-                string ten = selectedRow.Cells["Ten"].Value.ToString();
-
-                // Hiển thị thông tin sinh viên đã chọn
-                MessageBox.Show($"Bạn đã chọn sinh viên:\nMã SV: {maSV}\nHọ: {ho}\nTên: {ten}");
-            }
-
-        }
-        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        {
-            // Kiểm tra xem có hàng nào được chọn không
-            if (dataGridView1.SelectedRows.Count > 0)
-            {
-                // Lấy thông tin hàng đã chọn
-                DataGridViewRow selectedRow = dataGridView1.SelectedRows[0];
-
-                // Lấy thông tin sinh viên từ hàng đã chọn và gán cho các ô nhập liệu
                 txtmasv.Text = selectedRow.Cells["MaSV"].Value.ToString();
                 txtho.Text = selectedRow.Cells["Ho"].Value.ToString();
                 txtten.Text = selectedRow.Cells["Ten"].Value.ToString();
                 txtemail.Text = selectedRow.Cells["Email"].Value.ToString();
                 txtsdt.Text = selectedRow.Cells["SoDienThoai"].Value.ToString();
-                txtmanganh.Text = selectedRow.Cells["MaNganh"].Value.ToString();
                 date.Value = Convert.ToDateTime(selectedRow.Cells["NgaySinh"].Value);
                 txtdiachi.Text = selectedRow.Cells["DiaChi"].Value.ToString();
                 txtsocmnd.Text = selectedRow.Cells["SoCMND"].Value.ToString();
                 txtkhoahoc.Text = selectedRow.Cells["KhoaHoc"].Value.ToString();
                 txtghichu.Text = selectedRow.Cells["GhiChu"].Value.ToString();
 
-                // Set ComboBox1 based on the gender column
                 string gender = selectedRow.Cells["GioiTinh"].Value.ToString();
                 if (comboBox1.Items.Contains(gender))
                 {
@@ -97,9 +83,18 @@ namespace Nhom2_pro
                 }
                 else
                 {
-                    comboBox1.SelectedIndex = -1; // Deselect if the value is not recognized
+                    comboBox1.SelectedIndex = -1;
                 }
+
+                // Lấy MaNganh từ hàng được chọn và gán vào comboBoxmanganh
+                string maNganh = selectedRow.Cells["MaNganh"].Value.ToString();
+                comboBoxmanganh.SelectedValue = maNganh;
             }
+        }
+
+        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
+        {
+          
         }
 
 
@@ -136,20 +131,7 @@ namespace Nhom2_pro
 
         }
 
-        private void gtnam_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void gtnu_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void gtkhac_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
+       
 
         private void txtdiachi_TextChanged(object sender, EventArgs e)
         {
@@ -176,15 +158,7 @@ namespace Nhom2_pro
 
         }
 
-        private void daxoa_CheckedChanged(object sender, EventArgs e)
-        {
 
-        }
-
-        private void chuaxoa_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
 
         private void btnthem_Click(object sender, EventArgs e)
         {
@@ -203,7 +177,7 @@ namespace Nhom2_pro
                     cmd.Parameters.AddWithValue("@Ten", txtten.Text);
                     cmd.Parameters.AddWithValue("@Email", txtemail.Text);
                     cmd.Parameters.AddWithValue("@SoDienThoai", txtsdt.Text);
-                    cmd.Parameters.AddWithValue("@MaNganh", txtmanganh.Text);
+                    cmd.Parameters.AddWithValue("@MaNganh", comboBoxmanganh.SelectedValue); // Lấy MaNganh từ ComboBox
                     cmd.Parameters.AddWithValue("@NgaySinh", date.Value);
                     cmd.Parameters.AddWithValue("@DiaChi", txtdiachi.Text);
                     cmd.Parameters.AddWithValue("@SoCMND", txtsocmnd.Text);
@@ -233,6 +207,7 @@ namespace Nhom2_pro
         }
 
 
+
         private void btnsua_Click(object sender, EventArgs e)
         {
             // Check if a student is selected before attempting to update
@@ -260,7 +235,7 @@ namespace Nhom2_pro
                     cmd.Parameters.AddWithValue("@Ten", txtten.Text);
                     cmd.Parameters.AddWithValue("@Email", txtemail.Text);
                     cmd.Parameters.AddWithValue("@SoDienThoai", txtsdt.Text);
-                    cmd.Parameters.AddWithValue("@MaNganh", txtmanganh.Text);
+                    cmd.Parameters.AddWithValue("@MaNganh", comboBoxmanganh.SelectedValue); // Lấy MaNganh từ ComboBox
                     cmd.Parameters.AddWithValue("@NgaySinh", date.Value);
                     cmd.Parameters.AddWithValue("@DiaChi", txtdiachi.Text);
                     cmd.Parameters.AddWithValue("@SoCMND", txtsocmnd.Text);
@@ -285,6 +260,7 @@ namespace Nhom2_pro
                 }
             }
         }
+
 
         private void btnxoa_Click(object sender, EventArgs e)
         {
@@ -326,14 +302,20 @@ namespace Nhom2_pro
                 try
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT * FROM SinhVien WHERE DaXoa = 1", conn); // Query to get deleted students
+                    // Truy vấn kết hợp giữa SinhVien và NganhHoc để lấy TenNganh của các sinh viên đã bị xóa
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT sv.MaSV, sv.Ho, sv.Ten, sv.Email, sv.SoDienThoai, sv.MaNganh, nh.TenNganh, sv.NgaySinh, sv.DiaChi, sv.SoCMND, sv.KhoaHoc, sv.GhiChu, sv.GioiTinh " +
+                        "FROM SinhVien sv " +
+                        "JOIN NganhHoc nh ON sv.MaNganh = nh.MaNganh " +
+                        "WHERE sv.DaXoa = 1", conn);
+
                     SqlDataAdapter adapter = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     adapter.Fill(dt);
 
                     if (dt.Rows.Count > 0)
                     {
-                        dataGridView1.DataSource = dt; // Display deleted students in DataGridView
+                        dataGridView1.DataSource = dt; // Hiển thị sinh viên đã xóa cùng với TenNganh
                     }
                     else
                     {
@@ -347,6 +329,7 @@ namespace Nhom2_pro
             }
         }
 
+
         private void btnsvhientai_Click(object sender, EventArgs e)
         {
             string connectionString = "Data Source=HOANG-QUOC-DUY;Initial Catalog=QuanLySinhVien;Integrated Security=True;";
@@ -356,14 +339,20 @@ namespace Nhom2_pro
                 try
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT * FROM SinhVien WHERE DaXoa = 0", conn); // Query to get non-deleted students
+                    // Truy vấn kết hợp giữa SinhVien và NganhHoc để lấy TenNganh
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT sv.MaSV, sv.Ho, sv.Ten, sv.Email, sv.SoDienThoai, sv.MaNganh, nh.TenNganh, sv.NgaySinh, sv.DiaChi, sv.SoCMND, sv.KhoaHoc, sv.GhiChu, sv.GioiTinh " +
+                        "FROM SinhVien sv " +
+                        "JOIN NganhHoc nh ON sv.MaNganh = nh.MaNganh " +
+                        "WHERE sv.DaXoa = 0", conn);
+
                     SqlDataAdapter adapter = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     adapter.Fill(dt);
 
                     if (dt.Rows.Count > 0)
                     {
-                        dataGridView1.DataSource = dt; // Display non-deleted students in DataGridView
+                        dataGridView1.DataSource = dt; // Hiển thị sinh viên chưa bị xóa cùng với TenNganh
                     }
                     else
                     {
@@ -376,6 +365,7 @@ namespace Nhom2_pro
                 }
             }
         }
+
 
         private void btnkhoiphuc_Click(object sender, EventArgs e)
         {
@@ -435,6 +425,47 @@ namespace Nhom2_pro
                     MessageBox.Show("Lỗi: " + ex.Message);
                 }
             }
+        }
+
+        private void comboBoxmanganh_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+        // Phương thức Ngành Học
+        private void LoadNganhHoc()
+        {
+            string connectionString = "Data Source=HOANG-QUOC-DUY;Initial Catalog=QuanLySinhVien;Integrated Security=True;";
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    SqlCommand cmd = new SqlCommand("SELECT MaNganh, TenNganh FROM NganhHoc WHERE DaXoa = 0", conn);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    comboBoxmanganh.DataSource = dt;
+                    comboBoxmanganh.DisplayMember = "TenNganh";
+                    comboBoxmanganh.ValueMember = "MaNganh";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi tải dữ liệu ngành học: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnnew_Click(object sender, EventArgs e)
+        {
+            ThemNganh themNganh = new ThemNganh();
+            themNganh.Show();
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

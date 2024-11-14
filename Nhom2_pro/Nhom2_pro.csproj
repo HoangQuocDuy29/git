@@ -95,6 +95,12 @@
     <Compile Include="QLSV.Designer.cs">
       <DependentUpon>QLSV.cs</DependentUpon>
     </Compile>
+    <Compile Include="ThemNganh.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ThemNganh.Designer.cs">
+      <DependentUpon>ThemNganh.cs</DependentUpon>
+    </Compile>
     <Compile Include="TLH.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -103,6 +109,9 @@
     </Compile>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GhiDanhSv.resx">
+      <DependentUpon>GhiDanhSv.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Menu.resx">
       <DependentUpon>Menu.cs</DependentUpon>
@@ -118,6 +127,9 @@
     </Compile>
     <EmbeddedResource Include="QLSV.resx">
       <DependentUpon>QLSV.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ThemNganh.resx">
+      <DependentUpon>ThemNganh.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TLH.resx">
       <DependentUpon>TLH.cs</DependentUpon>
